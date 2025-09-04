@@ -1,0 +1,1 @@
+# strtup with mongoose
