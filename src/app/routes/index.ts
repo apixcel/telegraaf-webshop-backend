@@ -1,5 +1,5 @@
 import express from "express";
-import pdfRoute from "./pdf.route";
+import orderRoute from "./order.route";
 import uploadRoute from "./upload.route";
 import userRoute from "./user.route";
 
@@ -11,8 +11,8 @@ const moduleRoutes = [
     route: userRoute,
   },
   {
-    path: "/pdf",
-    route: pdfRoute,
+    path: "/order",
+    route: orderRoute,
   },
   {
     path: "/upload",
