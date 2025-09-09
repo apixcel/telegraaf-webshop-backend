@@ -37,49 +37,47 @@ const transformRow = (row: Record<string, string>) => {
   const full = `${first} ${last}`.trim();
 
   return {
-    ordered_at: formatDateTime(row.orderDate),
-    expected_shipping_date: formatExpectedDate(row.expectedShippingDate),
-    shipping_address: {
-      full_name: full,
-      address_line_1: joinAddressLine1(
-        row.shippingAddressStreet,
-        row.shippingAddressNumber,
-        row.shippingAddressNumberAddition
-      ),
-      postal_code: row.shippingAddressPostcode ?? "",
-      city: row.shippingAddressCity ?? "",
-      country: row.shippingAddressCountry?.toUpperCase() ?? "",
-    },
-    billing_address: {
-      full_name: full,
-      address_line_1: joinAddressLine1(
-        row.shippingAddressStreet,
-        row.shippingAddressNumber,
-        row.shippingAddressNumberAddition
-      ),
-      postal_code: row.shippingAddressPostcode ?? "",
-      city: row.shippingAddressCity ?? "",
-      country: row.shippingAddressCountry?.toUpperCase() ?? "",
-    },
-    customer: {
-      first_name: first,
-      last_name: last,
-      email: row.customerEmail ?? "",
-      telephone: row.telephone ?? "",
-    },
-    products: [
-      {
-        sku: row.sku ?? "",
-        sku_type: "sku",
-        ean: row.EAN ?? "",
-        name: row.name ?? "",
-        pivot: {
-          amount: Number(row.quantity ?? 0),
-          cost_price: Number(row.costPrice ?? 0),
-        },
+    order: {
+      id: row.orderId, // additional but also bad
+      shipping_address: {
+        fullname: full,
+        address_line_1: joinAddressLine1(
+          row.shippingAddressStreet,
+          row.shippingAddressNumber,
+          row.shippingAddressNumberAddition
+        ),
+        postal_code: row.shippingAddressPostcode ?? "",
+        city: row.shippingAddressCity ?? "",
+        country: row.shippingAddressCountry?.toUpperCase() ?? "",
       },
-    ],
+      email: row.customerEmail ?? "",
+      billingAddress: null,
+      products: [
+        {
+          product: {
+            fulfilmentclient_id: 105,
+            sku: row.sku,
+            expected_shipping_date: row.expectedShippingDate,
+            shipped_at: row.shippingDate // additional but also bad
+          },
+          amount: Number(row.quantity ?? 0),
+          additional_information: [{
+            qty_shipped: row.qtyShipped,
+            shipper: row.shipper,
+            track_and_trace_code: row.trackAndTraceCode,
+            track_and_trace_url: row.trackAndTraceUrl,
+            ean:row.EAN // additional
+          }],
+          unit_price: Number(row.costPrice ?? 0),
+          paid_total: Number(row.costPrice ?? 0) * Number(row.quantity ?? 0),
+          // paid_tax: 0,
+          // product_id: 1551,
+        },
+      ],
+      ordered_at: row.orderDate // additional but also bad
+    },
   };
+
 };
 
 // -------- controller --------
@@ -94,7 +92,7 @@ const createOrder = catchAsyncError(async (req, res) => {
     .on("data", (data) => rows.push(data))
     .on("end", async () => {
       const payload = rows.map(transformRow);
-console.log(payload[0]);
+      // console.log(rows[0]);
       // ======== external API call ========
       // const response = await axios.post(
       //   `${process.env.LYRA_API_URL}/order` as string,
