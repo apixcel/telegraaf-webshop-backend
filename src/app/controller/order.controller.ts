@@ -8,7 +8,7 @@ import axios from "axios";
 
 // -------- helpers --------
 
-// তারিখ -> "YYYY-MM-DD HH:mm:ss"
+// date -> "YYYY-MM-DD HH:mm:ss"
 const formatDateTime = (iso?: string) => {
   if (!iso) return undefined;
   const d = new Date(iso);
@@ -26,7 +26,7 @@ const formatExpectedDate = (dmy?: string) => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-// অ্যাড্রেস join
+// address join
 const joinAddressLine1 = (street?: string, num?: string, add?: string) =>
   [street, num, add].filter(Boolean).map(s => s!.trim()).join(" ").trim();
 
@@ -40,7 +40,8 @@ const transformRow = (row: Record<string, string>) => {
     order: {
       id: row.orderId, // additional but also bad
       shipping_address: {
-        fullname: full,
+        // fullname: full,
+        fullname: "apixcel for the test",
         address_line_1: joinAddressLine1(
           row.shippingAddressStreet,
           row.shippingAddressNumber,
@@ -71,7 +72,7 @@ const transformRow = (row: Record<string, string>) => {
           unit_price: Number(row.costPrice ?? 0),
           paid_total: Number(row.costPrice ?? 0) * Number(row.quantity ?? 0),
           // paid_tax: 0,
-          // product_id: 1551,
+          product_id: 1551 // product id is required
         },
       ],
       ordered_at: row.orderDate // additional but also bad
@@ -94,24 +95,24 @@ const createOrder = catchAsyncError(async (req, res) => {
       const payload = rows.map(transformRow);
       // console.log(rows[0]);
       // ======== external API call ========
-      // const response = await axios.post(
-      //   `${process.env.LYRA_API_URL}/order` as string,
-      //   { data: payload[0] }, // body
-      //   {
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //       Authorization: `Bearer ${process.env.LYRA_API_TOKEN}`,
-      //     },
-      //   }
-      // );
+      const response = await axios.post(
+        `${process.env.LYRA_API_URL}/order` as string,
+        payload[0], // body
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.LYRA_API_TOKEN}`,
+          },
+        }
+      );
 
-      // চাইলে DB তেও ইনসার্ট করতে পারেন
+      // insert into db
       // await Order.insertMany(payload);
 
       sendResponse(res, {
         success: true,
         statusCode: 200,
-        data: payload[0], // external API response ফেরত দিবে
+        data: response.data, // external API response 
         message: "CSV parsed & pushed successfully",
       });
     });
