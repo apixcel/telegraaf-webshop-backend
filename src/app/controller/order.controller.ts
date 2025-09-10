@@ -6,15 +6,41 @@ import catchAsyncError from "../utils/catchAsync";
 import sendResponse from "../utils/send.response";
 import axios from "axios";
 
-// -------- helpers --------
+// -------- types --------
+interface CsvOrderRow {
+  orderId: string;
+  orderDate: string;
+  shippingDate: string;
+  qtyShipped: string;
+  shipper: string;
+  trackAndTraceCode: string;
+  trackAndTraceUrl: string;
+  customerFirstname: string;
+  customerLastname: string;
+  shippingAddressStreet: string;
+  shippingAddressNumber: string;
+  shippingAddressNumberAddition: string;
+  shippingAddressPostcode: string;
+  shippingAddressCity: string;
+  shippingAddressCountry: string;
+  customerEmail: string;
+  telephone: string;
+  sku: string;
+  quantity: string;
+  EAN: string;
+  costPrice: string;
+  name: string;
+  expectedShippingDate: string;
+}
 
+// -------- helpers --------
 
 // address join
 const joinAddressLine1 = (street?: string, num?: string, add?: string) =>
   [street, num, add].filter(Boolean).map(s => s!.trim()).join(" ").trim();
 
 // -------- transformer --------
-const transformRow = (row: Record<string, string>) => {
+const transformRow = (row: CsvOrderRow) => {
   // const first = row.customerFirstname?.trim() ?? "";
   // const last = row.customerLastname?.trim() ?? "";
   // const full = `${first} ${last}`.trim();
@@ -67,27 +93,42 @@ const transformRow = (row: Record<string, string>) => {
 // -------- controller --------
 const createOrder = catchAsyncError(async (req, res) => {
   const { file } = req;
-  if (!file) {throw new AppError(400, "No CSV file uploaded");}
+  if (!file) { throw new AppError(400, "No CSV file uploaded"); }
 
-  const rows: unknown[] = [];
+  const rows: CsvOrderRow[] = [];
 
   fs.createReadStream(file.path)
     .pipe(csv({ separator: ";" }))
     .on("data", (data) => rows.push(data))
     .on("end", async () => {
+      
       const payload = rows.map(transformRow);
-      // console.log(rows[0]);
-      // ======== external API call ========
-      const response = await axios.post(
-        `${process.env.LYRA_API_URL}/order`,
-        payload[0], // body
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.LYRA_API_TOKEN}`,
-          },
-        }
-      );
+
+      // ======== external API call for the single order ========
+      // const response = await axios.post(`${process.env.LYRA_API_URL}/order`,
+      //   payload[0],
+      //   {
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //       Authorization: `Bearer ${process.env.LYRA_API_TOKEN}`,
+      //     },
+      //   }
+      // );
+
+      // ======== external API call for the multiple order ========
+      const responses = [];
+      for (const order of payload.slice(0, 10)) {
+        const resp = await axios.post(`${process.env.LYRA_API_URL}/order`,
+          order,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.LYRA_API_TOKEN}`,
+            },
+          }
+        );
+        responses.push(resp.data);
+      }
 
       // insert into db
       // await Order.insertMany(payload);
@@ -95,11 +136,12 @@ const createOrder = catchAsyncError(async (req, res) => {
       sendResponse(res, {
         success: true,
         statusCode: 200,
-        data: response.data, // external API response 
+        data: responses, // external API response for single response.data
         message: "CSV parsed & pushed successfully",
       });
     });
 });
 
 const orderController = { createOrder };
+
 export default orderController;
