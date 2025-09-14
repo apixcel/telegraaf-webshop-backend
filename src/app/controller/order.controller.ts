@@ -46,7 +46,7 @@ const createOrder = catchAsyncError(async (req, res) => {
 const getOrders = catchAsyncError(async (req, res) => {
   const query = req.query || {};
   const queryString = generateQueryParams(query);
-  const response = await axios.get(`${process.env.LYRA_API_URL}/orders?ordering=status`, {
+  const response = await axios.get(`${process.env.LYRA_API_URL}/orders?${queryString}`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${process.env.LYRA_API_TOKEN}`,
