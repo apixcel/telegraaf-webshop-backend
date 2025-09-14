@@ -37,7 +37,11 @@ interface CsvOrderRow {
 
 // address join
 const joinAddressLine1 = (street?: string, num?: string, add?: string) =>
-  [street, num, add].filter(Boolean).map(s => s!.trim()).join(" ").trim();
+  [street, num, add]
+    .filter(Boolean)
+    .map((s) => s!.trim())
+    .join(" ")
+    .trim();
 
 // -------- transformer --------
 const transformRow = (row: CsvOrderRow) => {
@@ -68,7 +72,7 @@ const transformRow = (row: CsvOrderRow) => {
             fulfilmentclient_id: 105,
             sku: row.sku,
             expected_shipping_date: row.expectedShippingDate,
-            shipped_at: row.shippingDate // additional but also bad
+            shipped_at: row.shippingDate, // additional but also bad
           },
           amount: Number(row.quantity ?? 0),
           additional_information: [
@@ -76,24 +80,25 @@ const transformRow = (row: CsvOrderRow) => {
             `Shipper: ${row.shipper}`,
             `Track And Trace Code: ${row.trackAndTraceCode}`,
             `Track And Trace Url: ${row.trackAndTraceUrl}`,
-            `EAN: ${row.EAN}`
+            `EAN: ${row.EAN}`,
           ],
           unit_price: Number(row.costPrice ?? 0),
           paid_total: Number(row.costPrice ?? 0) * Number(row.quantity ?? 0),
           // paid_tax: 0,
-          product_id: 1551 // product id is required
+          product_id: 1551, // product id is required
         },
       ],
-      ordered_at: row.orderDate // additional but also bad
+      ordered_at: row.orderDate, // additional but also bad
     },
   };
-
 };
 
 // -------- controller --------
 const createOrder = catchAsyncError(async (req, res) => {
   const { file } = req;
-  if (!file) { throw new AppError(400, "No CSV file uploaded"); }
+  if (!file) {
+    throw new AppError(400, "No CSV file uploaded");
+  }
 
   const rows: CsvOrderRow[] = [];
 
@@ -101,7 +106,6 @@ const createOrder = catchAsyncError(async (req, res) => {
     .pipe(csv({ separator: ";" }))
     .on("data", (data) => rows.push(data))
     .on("end", async () => {
-      
       const payload = rows.map(transformRow);
 
       // ======== external API call for the single order ========
@@ -116,7 +120,7 @@ const createOrder = catchAsyncError(async (req, res) => {
       // );
 
       // ======== external API call for the multiple order ========
-      const responses = [];
+      /* const responses = [];
       for (const order of payload.slice(0, 10)) {
         const resp = await axios.post(`${process.env.LYRA_API_URL}/order`,
           order,
@@ -128,7 +132,7 @@ const createOrder = catchAsyncError(async (req, res) => {
           }
         );
         responses.push(resp.data);
-      }
+      } */
 
       // insert into db
       // await Order.insertMany(payload);
@@ -136,12 +140,29 @@ const createOrder = catchAsyncError(async (req, res) => {
       sendResponse(res, {
         success: true,
         statusCode: 200,
-        data: responses, // external API response for single response.data
+        data: payload, // external API response for single response.data
         message: "CSV parsed & pushed successfully",
       });
     });
 });
 
-const orderController = { createOrder };
+const getOrders = catchAsyncError(async (req, res) => {
+  // ======== external API call for the single order ========
+  const response = await axios.get(`${process.env.LYRA_API_URL}/orders`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.LYRA_API_TOKEN}`,
+    },
+  });
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    data: response.data,
+    message: "CSV parsed & pushed successfully",
+  });
+});
+
+const orderController = { createOrder, getOrders };
 
 export default orderController;
