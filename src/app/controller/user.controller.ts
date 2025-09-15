@@ -241,7 +241,7 @@ const acceptAccount = catchAsyncError(async (req, res) => {
 const getAllUsers = catchAsyncError(async (req, res) => {
   const user = req.user!;
 
-  const match: Record<string, any> = {};
+  const match: Record<string, unknown> = {};
 
   if (user.role === "admin") {
     match.role = "admin";
