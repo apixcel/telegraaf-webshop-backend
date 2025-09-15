@@ -196,6 +196,7 @@ const creataAccountThroughInvitation = catchAsyncError(async (req, res) => {
     throw new AppError(400, "User already exist with this email");
   }
 
+  await Invitation.findByIdAndUpdate(isInvited._id, { status: "accepted" });
   const user = new User({
     ...body,
     email: isInvited.email,
