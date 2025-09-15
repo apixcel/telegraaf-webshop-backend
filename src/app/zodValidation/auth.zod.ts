@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const emailSchema = z
+  .string({ message: "Email is required" })
+  .email({ message: "Invalid email address" });
+
 const signup = z.object({
   firstName: z.string({ message: "firstName is required" }),
   lastName: z.string({ message: "lastName is required" }),
@@ -32,12 +36,18 @@ const changePassword = z.object({
 });
 
 const sendVerificationEmail = z.object({
-  email: z.string({ message: "Email is required String" }).email({ message: "Email is invalid" }),
+  email: emailSchema,
 });
+
+const forgotPassword = z.object({
+  email: emailSchema,
+});
+
 export const userValidation = {
   login,
   resetPassword,
   changePassword,
   sendVerificationEmail,
   signup,
+  forgotPassword,
 };
