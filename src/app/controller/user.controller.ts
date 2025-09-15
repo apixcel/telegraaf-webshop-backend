@@ -8,6 +8,7 @@ import User from "../models/user.model";
 import authUtils from "../utils/auth.utils";
 import catchAsyncError from "../utils/catchAsync";
 import sendResponse from "../utils/send.response";
+
 const login = catchAsyncError(async (req, res) => {
   const { body } = req;
   const mode = body.mode || "email";
@@ -385,8 +386,6 @@ const verifyOtp = catchAsyncError(async (req, res) => {
     message: "User verified successfully",
   });
 });
-
-// import User, PdfForm, sendResponse, catchAsyncError as you already do
 
 const deleteAccount = catchAsyncError(async (req, res) => {
   const user = req.user!;
