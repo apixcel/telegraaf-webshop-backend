@@ -8,11 +8,39 @@ const router = Router();
 const userRoute = router;
 
 router.post("/login", validSchema(userValidation.login), authController.login);
+
+router.post(
+  "/invite",
+  authMiddleware.isAuthenticatedUser(),
+  validSchema(userValidation.inviteAdmin),
+  authController.inviteAdmin
+);
+
+router.get("/check/:token", authController.checkInvitationToken);
+
+router.post(
+  "/signup",
+  validSchema(userValidation.signup),
+  authController.creataAccountThroughInvitation
+);
+router.post(
+  "/accept/:id",
+  authMiddleware.isAuthenticatedUser(),
+  authMiddleware.authorizeRoles("sup-admin"),
+  authController.acceptAccount
+);
+
+router.get("/all", authMiddleware.isAuthenticatedUser(), authController.getAllUsers);
+
 router.post("/logout", authMiddleware.isAuthenticatedUser(), authController.logout);
 router.get("/author", authMiddleware.isAuthenticatedUser(), authController.author);
 router.post("/refresh-token", authController.refreshToken);
 router.patch("/update-profile", authMiddleware.isAuthenticatedUser(), authController.updateProfile);
-router.post("/forgot-password", validSchema(userValidation.forgotPassword), authController.forgotPassword);
+router.post(
+  "/forgot-password",
+  validSchema(userValidation.forgotPassword),
+  authController.forgotPassword
+);
 router.post(
   "/send-verification-email",
   validSchema(userValidation.sendVerificationEmail),

@@ -7,9 +7,8 @@ const emailSchema = z
 const signup = z.object({
   firstName: z.string({ message: "firstName is required" }),
   lastName: z.string({ message: "lastName is required" }),
-  role: z.enum(["sup-admin", "admin"]).default("admin"),
-  email: z.string({ message: "email is required" }).email({ message: "Email is invalid" }),
   password: z.string({ message: "Password is required" }),
+  token: z.string({ message: "Invitation token is required" }),
 });
 
 const login = z
@@ -43,6 +42,15 @@ const forgotPassword = z.object({
   email: emailSchema,
 });
 
+export const zRole = z.enum(["sup-admin", "admin"]);
+
+// Core fields shared by create/update
+const inviteAdmin = z.object({
+  email: z.string().email(),
+  role: zRole.default("admin"),
+  shouldAutoAccept: z.boolean().optional(),
+});
+
 export const userValidation = {
   login,
   resetPassword,
@@ -50,4 +58,5 @@ export const userValidation = {
   sendVerificationEmail,
   signup,
   forgotPassword,
+  inviteAdmin,
 };

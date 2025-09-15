@@ -1,9 +1,10 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import QueryBuilder from "../builder/QueryBuilder";
 import config from "../config";
 import AppError from "../errors/AppError";
-import PdfForm from "../models/pdf.model";
+import Invitation from "../models/invitation.model";
 import User from "../models/user.model";
 import authUtils from "../utils/auth.utils";
 import catchAsyncError from "../utils/catchAsync";
@@ -43,6 +44,20 @@ const login = catchAsyncError(async (req, res) => {
     return;
   }
 
+  if (!isExist.isAccepted) {
+    sendResponse(res, {
+      data: {
+        result: {
+          isAccepted: false,
+        },
+      },
+      success: false,
+      statusCode: 200,
+      message: "Please wait for admin to accept your account",
+    });
+    return;
+  }
+
   const tokenPayload = {
     _id: isExist._id.toString(),
     email: isExist.email,
@@ -77,6 +92,179 @@ const login = catchAsyncError(async (req, res) => {
     success: true,
     statusCode: 200,
     message: "User logged in successfully",
+  });
+});
+
+const inviteAdmin = catchAsyncError(async (req, res) => {
+  const { body } = req;
+  const user = req.user!;
+  const isAlreadyInvited = await Invitation.findOne({ email: body.email });
+
+  if (user.role !== "sup-admin") {
+    if (body.role === "sup-admin") {
+      throw new AppError(400, "Only super admin can invite super admin");
+    }
+
+    if (body.shouldAutoAccept) {
+      throw new AppError(400, "Only super admin can accept invitation");
+    }
+  }
+
+  const exipiresTime = 24 * 7 * 60 * 60 * 1000; // 7 days
+  if (isAlreadyInvited) {
+    const isInvitationExpired = new Date(isAlreadyInvited.expiresAt) < new Date();
+    if (!isInvitationExpired || isAlreadyInvited.status == "accepted") {
+      throw new AppError(400, "User already invited");
+    }
+    await Invitation.findByIdAndDelete(isAlreadyInvited._id);
+  }
+
+  const isUserExist = await User.findOne({ email: body.email }).select("_id");
+  if (isUserExist) {
+    throw new AppError(400, "User already exist with this email");
+  }
+
+  const invitation = await Invitation.create({
+    ...body,
+    shouldAutoAccept: Boolean(body.shouldAutoAccept),
+    status: "pending",
+    invitedBy: user._id,
+    expiresAt: new Date(new Date().getTime() + exipiresTime),
+  });
+
+  await authUtils.sendEmail({
+    receiverMail: body.email as string,
+    subject: "Invitation to join Telegraaf Webshop",
+    html: `<p>Click <a href="${config.FRONTEND_BASE_URL}/register?token=${invitation._id}">here</a> to accept invitation</p>`,
+  });
+  sendResponse(res, {
+    data: invitation,
+    success: true,
+    statusCode: 200,
+    message: "Invitation sent successfully",
+  });
+});
+
+const checkInvitationToken = catchAsyncError(async (req, res) => {
+  const { token } = req.params;
+
+  const invitation = await Invitation.findById(token);
+  if (!invitation) {
+    throw new AppError(400, "Invitation not found");
+  }
+
+  const isExpired = new Date(invitation.expiresAt) < new Date();
+  if (isExpired) {
+    throw new AppError(400, "Invitation expired");
+  }
+
+  if (invitation.status !== "pending") {
+    throw new AppError(400, "Invitation expired");
+  }
+  sendResponse(res, {
+    data: {
+      email: invitation.email,
+      role: invitation.role,
+    },
+    success: true,
+    statusCode: 200,
+    message: "Invitation found successfully",
+  });
+});
+
+const creataAccountThroughInvitation = catchAsyncError(async (req, res) => {
+  const { body } = req;
+
+  const isInvited = await Invitation.findOne({ _id: body.token });
+
+  if (!isInvited) {
+    throw new AppError(400, "Invitation not found");
+  }
+
+  const isExpired = new Date(isInvited.expiresAt) < new Date();
+  if (isExpired) {
+    throw new AppError(400, "Invitation expired");
+  }
+
+  if (isInvited.status !== "pending") {
+    throw new AppError(400, "Invitation expired");
+  }
+
+  const isUserExist = await User.findOne({ email: isInvited.email }).select("_id");
+  if (isUserExist) {
+    await Invitation.findByIdAndDelete(isInvited._id);
+    throw new AppError(400, "User already exist with this email");
+  }
+
+  const user = new User({
+    ...body,
+    email: isInvited.email,
+    role: isInvited.role,
+    isVerified: true,
+    isAccepted: isInvited.shouldAutoAccept,
+  });
+  await user.save();
+
+  sendResponse(res, {
+    data: null,
+    success: true,
+    statusCode: 201,
+    message: "Registration successful",
+  });
+});
+
+const acceptAccount = catchAsyncError(async (req, res) => {
+  const id = req.params.id;
+  const user = await User.findById(id);
+
+  if (!user) {
+    throw new AppError(404, "Account not found");
+  }
+
+  if (user.isAccepted) {
+    throw new AppError(400, "Account already accepted");
+  }
+
+  user.isAccepted = true;
+
+  await user.save();
+
+  sendResponse(res, {
+    data: null,
+    success: true,
+    statusCode: 200,
+    message: "Account accepted successfully",
+  });
+});
+
+const getAllUsers = catchAsyncError(async (req, res) => {
+  const user = req.user!;
+
+  const match: Record<string, any> = {};
+
+  if (user.role === "admin") {
+    match.role = "admin";
+  }
+  const model = User.find(match).select("-password -otp");
+
+  const queryModel = new QueryBuilder(model, req.query)
+    .filter()
+    .search(["email", "firstName", "lastName"])
+    .sort()
+    .fields()
+    .paginate();
+  await queryModel.count();
+
+  const users = await queryModel.modelQuery;
+
+  const meta = queryModel.getMeta();
+
+  sendResponse(res, {
+    data: users,
+    success: true,
+    statusCode: 200,
+    message: "Users retrieved successfully",
+    meta,
   });
 });
 
@@ -205,7 +393,7 @@ const forgotPassword = catchAsyncError(async (req, res) => {
     throw new AppError(400, "Email is required");
   }
 
-  const user = await User.findOne({email: email});
+  const user = await User.findOne({ email: email });
 
   if (!user) {
     throw new AppError(404, "User not found");
@@ -398,7 +586,7 @@ const deleteAccount = catchAsyncError(async (req, res) => {
         }
 
         await User.findByIdAndDelete(user._id, { session });
-        await PdfForm.deleteMany({ user: user._id }, { session });
+        await Invitation.deleteMany({ email: user.email }, { session });
       } /*, { writeConcern: { w: "majority" } }*/
     );
     res.clearCookie("accessToken", {
@@ -441,6 +629,11 @@ const authController = {
   sendVerificationEmail,
   updateProfile,
   deleteAccount,
+  inviteAdmin,
+  creataAccountThroughInvitation,
+  getAllUsers,
+  checkInvitationToken,
+  acceptAccount,
 };
 
 export default authController;

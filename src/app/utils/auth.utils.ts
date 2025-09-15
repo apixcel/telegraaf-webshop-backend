@@ -153,6 +153,22 @@ const sendVerificationEmail = async (email: string) => {
     remainingSecond: waitTime,
   };
 };
+
+const adminSeed = async () => {
+  const admin = await User.findOne({ role: "sup-admin" });
+  if (admin) {
+    return;
+  }
+  await User.create({
+    email: config.ADMIN_EMAIL,
+    password: config.ADMIN_DEFAULT_PASSWORD!,
+    role: "sup-admin",
+    firstName: "Super",
+    lastName: "Admin",
+    isVerified: true,
+    isAccepted: true,
+  });
+};
 const authUtils = {
   generateAccessToken,
   generateRefreshToken,
@@ -163,6 +179,7 @@ const authUtils = {
   sendMessage,
   sendEmail,
   sendVerificationEmail,
+  adminSeed,
 };
 
 export default authUtils;

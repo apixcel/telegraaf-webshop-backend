@@ -33,6 +33,11 @@ const UserSchema = new mongoose.Schema(
       required: true,
       default: false,
     },
+    isAccepted: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
     avatar: {
       type: String,
       required: false,
@@ -54,7 +59,9 @@ const UserSchema = new mongoose.Schema(
 );
 
 UserSchema.pre("save", async function (next) {
-  this.password = await bcrypt.hash(this.password, 10);
+  if (this.password) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
   next();
 });
 const User = mongoose.model("User", UserSchema);

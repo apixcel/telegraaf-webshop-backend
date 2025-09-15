@@ -15,6 +15,8 @@ const {
   CD_CLOUD_NAME,
   CD_API_SECRET,
   CD_API_KEY,
+  ADMIN_EMAIL,
+  ADMIN_DEFAULT_PASSWORD,
 } = process.env;
 export default {
   database_url: DB_URL,
@@ -38,4 +40,6 @@ export default {
     EXPIRY: "5m",
   },
   FRONTEND_BASE_URL: NODE_ENV === "development" ? "http://localhost:3000" : FRONTEND_BASE_URL,
+  ADMIN_DEFAULT_PASSWORD,
+  ADMIN_EMAIL,
 };
