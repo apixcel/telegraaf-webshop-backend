@@ -1,4 +1,4 @@
-export type TRoles = "user" | "admin";
+export type TRoles = "sup-admin" | "admin";
 
 export interface IUserJWTPayload {
   _id: string;

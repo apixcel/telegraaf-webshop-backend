@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import config from "../config";
 import AppError from "../errors/AppError";
 import PdfForm from "../models/pdf.model";
@@ -7,34 +8,6 @@ import User from "../models/user.model";
 import authUtils from "../utils/auth.utils";
 import catchAsyncError from "../utils/catchAsync";
 import sendResponse from "../utils/send.response";
-
-const signUp = catchAsyncError(async (req, res) => {
-  const { body } = req;
-
-  const isExist = await User.findOne({ email: body.email });
-  if (isExist) {
-    sendResponse(res, {
-      success: false,
-      data: null,
-      statusCode: 400,
-      message: `User already exist with email ${body.email}`,
-    });
-    return;
-  }
-
-  const user = new User({ ...body, role: "user" });
-  const result = await user.save();
-
-  await authUtils.sendVerificationEmail(result.email);
-
-  sendResponse(res, {
-    data: null,
-    success: true,
-    statusCode: 201,
-    message: "Registration successful. Please verify your email",
-  });
-});
-
 const login = catchAsyncError(async (req, res) => {
   const { body } = req;
   const mode = body.mode || "email";
@@ -413,7 +386,6 @@ const verifyOtp = catchAsyncError(async (req, res) => {
   });
 });
 
-import mongoose from "mongoose";
 // import User, PdfForm, sendResponse, catchAsyncError as you already do
 
 const deleteAccount = catchAsyncError(async (req, res) => {
@@ -463,7 +435,6 @@ const deleteAccount = catchAsyncError(async (req, res) => {
 });
 
 const authController = {
-  signUp,
   login,
   logout,
   author,

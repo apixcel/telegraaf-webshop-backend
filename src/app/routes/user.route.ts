@@ -7,7 +7,6 @@ import { userValidation } from "../zodValidation/auth.zod";
 const router = Router();
 const userRoute = router;
 
-router.post("/signup", validSchema(userValidation.signup), authController.signUp);
 router.post("/login", validSchema(userValidation.login), authController.login);
 router.post("/logout", authMiddleware.isAuthenticatedUser(), authController.logout);
 router.get("/author", authMiddleware.isAuthenticatedUser(), authController.author);

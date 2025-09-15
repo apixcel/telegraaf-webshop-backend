@@ -3,7 +3,7 @@ import { z } from "zod";
 const signup = z.object({
   firstName: z.string({ message: "firstName is required" }),
   lastName: z.string({ message: "lastName is required" }),
-  role: z.enum(["user", "admin"]).default("user"),
+  role: z.enum(["sup-admin", "admin"]).default("admin"),
   email: z.string({ message: "email is required" }).email({ message: "Email is invalid" }),
   password: z.string({ message: "Password is required" }),
 });
@@ -35,9 +35,9 @@ const sendVerificationEmail = z.object({
   email: z.string({ message: "Email is required String" }).email({ message: "Email is invalid" }),
 });
 export const userValidation = {
-  signup,
   login,
   resetPassword,
   changePassword,
   sendVerificationEmail,
+  signup,
 };
