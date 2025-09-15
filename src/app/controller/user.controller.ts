@@ -240,15 +240,17 @@ const acceptAccount = catchAsyncError(async (req, res) => {
 
 const getAllUsers = catchAsyncError(async (req, res) => {
   const user = req.user!;
+  const query = req.query;
 
   const match: Record<string, unknown> = {};
 
   if (user.role === "admin") {
     match.role = "admin";
+    delete query.role;
   }
   const model = User.find(match).select("-password -otp");
 
-  const queryModel = new QueryBuilder(model, req.query)
+  const queryModel = new QueryBuilder(model, query)
     .filter()
     .search(["email", "firstName", "lastName"])
     .sort()
