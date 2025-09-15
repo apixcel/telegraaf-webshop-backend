@@ -13,7 +13,7 @@ router.post("/logout", authMiddleware.isAuthenticatedUser(), authController.logo
 router.get("/author", authMiddleware.isAuthenticatedUser(), authController.author);
 router.post("/refresh-token", authController.refreshToken);
 router.patch("/update-profile", authMiddleware.isAuthenticatedUser(), authController.updateProfile);
-router.post("/forgot-password", authController.forgotPassword);
+router.post("/forgot-password", validSchema(userValidation.forgotPassword), authController.forgotPassword);
 router.post(
   "/send-verification-email",
   validSchema(userValidation.sendVerificationEmail),

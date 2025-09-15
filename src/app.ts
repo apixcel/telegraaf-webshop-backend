@@ -5,6 +5,7 @@ import config from "./app/config";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import notFound from "./app/middlewares/notFound";
 import router from "./app/routes";
+import sendResponse from "./app/utils/send.response";
 
 const app: Application = express();
 
@@ -13,9 +14,9 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(
   cors({
-    origin: [config.frontend_base_url!],
+    origin: [config.FRONTEND_BASE_URL!],
     credentials: true,
-    exposedHeaders: ["Content-Disposition"],
+    // exposedHeaders: ["Content-Disposition"],
   })
 );
 
@@ -24,7 +25,12 @@ app.use("/api/v1", router);
 
 // test route
 app.get("/", async (_req: Request, res: Response) => {
-  res.send("server running ⚡⚡⚡ ");
+  sendResponse(res, {
+    data: null,
+    success: true,
+    statusCode: 200,
+    message: "server running ⚡⚡⚡ ",
+  });
 });
 
 app.use(notFound);

@@ -37,5 +37,5 @@ export default {
     SECRET: PASSWORD_RECOVERY_SECRET,
     EXPIRY: "5m",
   },
-  frontend_base_url: NODE_ENV === "development" ? "http://localhost:3000" : FRONTEND_BASE_URL,
+  FRONTEND_BASE_URL: NODE_ENV === "development" ? "http://localhost:3000" : FRONTEND_BASE_URL,
 };

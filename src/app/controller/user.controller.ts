@@ -225,17 +225,13 @@ const refreshToken = catchAsyncError(async (req, res) => {
 });
 
 const forgotPassword = catchAsyncError(async (req, res) => {
-  const { body } = req;
-  const email = body.email;
-  const locale = body.locale || "fr";
+  const { email } = req.body;
 
   if (!email) {
     throw new AppError(400, "Email is required");
   }
 
-  const user = await User.findOne({
-    email: email,
-  });
+  const user = await User.findOne({email: email});
 
   if (!user) {
     throw new AppError(404, "User not found");
@@ -243,7 +239,7 @@ const forgotPassword = catchAsyncError(async (req, res) => {
 
   const token = authUtils.generateForgotPasswordToken(user._id.toString());
 
-  const url = `${config.frontend_base_url}/${locale}/reset-password/${token}`;
+  const url = `${config.FRONTEND_BASE_URL}/reset-password/${token}`;
 
   const subject = "Account Password Reset Requested";
   const emailContent = `
