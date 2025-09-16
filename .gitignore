@@ -4,3 +4,4 @@ dist
 .vercel
 storage 
 .yarn
+.yarnrc.yml
