@@ -1,5 +1,6 @@
 import express from "express";
 import orderRoute from "./order.route";
+import productRoute from "./product.route";
 import uploadRoute from "./upload.route";
 import userRoute from "./user.route";
 
@@ -13,6 +14,10 @@ const moduleRoutes = [
   {
     path: "/order",
     route: orderRoute,
+  },
+  {
+    path: "/product",
+    route: productRoute,
   },
   {
     path: "/upload",
