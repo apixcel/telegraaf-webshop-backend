@@ -5,6 +5,7 @@ import config from "./app/config";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import notFound from "./app/middlewares/notFound";
 import router from "./app/routes";
+import { getProductSkuIdMap } from "./app/utils/product.utils";
 import sendResponse from "./app/utils/send.response";
 
 const app: Application = express();
@@ -25,8 +26,9 @@ app.use("/api/v1", router);
 
 // test route
 app.get("/", async (_req: Request, res: Response) => {
+  const data = await getProductSkuIdMap();
   sendResponse(res, {
-    data: null,
+    data: data,
     success: true,
     statusCode: 200,
     message: "server running ⚡⚡⚡ ",

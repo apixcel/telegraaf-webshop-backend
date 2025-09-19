@@ -5,6 +5,7 @@ import { upload } from "../middlewares/multer";
 const router = Router();
 
 router.use(authMiddleware.isAuthenticatedUser());
+router.get("/csv/:orderUuid", orderController.OrderCsvByOrderUuid);
 // @ts-expect-error: Unreachable code error
 router.post("/create-order", upload.single("file"), orderController.createOrder);
 router.get("/get-orders", orderController.getOrders);
