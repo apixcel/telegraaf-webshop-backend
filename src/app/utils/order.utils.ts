@@ -11,7 +11,7 @@ const transformOrderCsvRow = async (row: CsvOrderRow, productSkuIdMap: Record<st
     const last = row.customerLastname?.trim() ?? "";
     const fullName = `${first} ${last}`.trim();
 
-    const productId = productSkuIdMap[row.sku];
+    const productId = productSkuIdMap[row.EAN];
 
     return {
       order: {
@@ -33,7 +33,7 @@ const transformOrderCsvRow = async (row: CsvOrderRow, productSkuIdMap: Record<st
           {
             product: {
               fulfilmentclient_id: 105,
-              sku: row.sku,
+              sku: row.EAN,
               expected_shipping_date: row.expectedShippingDate,
               shipped_at: row.shippingDate, // additional but also bad
             },
