@@ -17,9 +17,12 @@ const createOrder = catchAsyncError(async (req, res) => {
   }
 
   const rows: CsvOrderRow[] = [];
+  // first delimiter detect
+  const fileContent = fs.readFileSync(file.path, "utf8");
+  const delimiter = fileContent.includes(";") ? ";" : ",";
 
   fs.createReadStream(file.path)
-    .pipe(csv({ separator: ";" }))
+    .pipe(csv({ separator: delimiter }))
     .on("data", (data) => rows.push(data))
     .on("end", async () => {
       const data = await getProductSkuIdMap({ freshData: true });
